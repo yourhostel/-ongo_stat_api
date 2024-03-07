@@ -1,12 +1,13 @@
 package com.example.stat.config;
 
-import com.example.stat.model.report.SalesReport;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.bson.Document;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -32,13 +33,18 @@ public class DatabaseInitializer {
 
             // Загрузка данных из JSON файла
             ObjectMapper mapper = new ObjectMapper();
-            SalesReport report = mapper.readValue(json, SalesReport.class);
+
+            JsonNode rootNode = mapper.readTree(json);
+
+            // Преобразование JsonNode в Document
+            Document report = Document.parse(rootNode.toString());
 
             // Storing Data in MongoDB
             // Here we save the data in the appropriate collections
-            mongoTemplate.save(report, "report");
+            mongoTemplate.save(report, "report_2");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 }
