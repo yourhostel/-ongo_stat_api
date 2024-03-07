@@ -6,13 +6,19 @@ logging:
 server:
   port: ${SERVER_PORT:9999}
 
+myapp:
+  mongodb:
+    username: ${USERNAME}
+    password: ${PASSWORD}
+    database: ${DATABASE}
+
 ---
 spring:
   profiles:
     active: dev
   data:
     mongodb:
-      uri: mongodb://${USER}:${PASSWORD}@localhost:27017/stat
+      uri: mongodb://${USER}:${PASSWORD}@localhost:27017/${DATABASE}
   redis:
     host: localhost
     port: 6379
