@@ -36,7 +36,7 @@ public class DatabaseInitializer {
 
             // Storing Data in MongoDB
             // Here we save the data in the appropriate collections
-            mongoTemplate.save(report, "collectionName");
+            mongoTemplate.save(report, "report");
         } catch (IOException e) {
             e.printStackTrace();
         }
