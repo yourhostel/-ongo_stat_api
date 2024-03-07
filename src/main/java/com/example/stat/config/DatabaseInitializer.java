@@ -26,16 +26,16 @@ public class DatabaseInitializer {
     @EventListener(ApplicationReadyEvent.class)
     public void initializeDatabase() {
         try {
-            // Загрузка данных из JSON файла
+            // Loading data from a JSON file
             InputStream inputStream = new ClassPathResource("test_report.json").getInputStream();
             String json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
-            // Преобразование JSON в объекты Java
+            // Загрузка данных из JSON файла
             ObjectMapper mapper = new ObjectMapper();
             SalesReport report = mapper.readValue(json, SalesReport.class);
 
-            // Сохранение данных в MongoDB
-            // Здесь вы сохраните данные в соответствующих коллекциях
+            // Storing Data in MongoDB
+            // Here we save the data in the appropriate collections
             mongoTemplate.save(report, "collectionName");
         } catch (IOException e) {
             e.printStackTrace();
