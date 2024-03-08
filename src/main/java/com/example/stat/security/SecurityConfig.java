@@ -25,7 +25,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-
     @Autowired
     private final UserRepository userRepository;
 

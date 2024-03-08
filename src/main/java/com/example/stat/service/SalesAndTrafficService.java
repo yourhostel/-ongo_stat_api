@@ -23,15 +23,15 @@ public class SalesAndTrafficService {
 
     public List<Document> findByDateRange(LocalDate startDate, LocalDate endDate) {
         Aggregation aggregation = newAggregation(
-                Aggregation.unwind("salesAndTrafficByDate"),
-                Aggregation.match(Criteria.where("salesAndTrafficByDate.date")
+                unwind("salesAndTrafficByDate"),
+                match(Criteria.where("salesAndTrafficByDate.date")
                         .gte(startDate.toString())
                         .lte(endDate.toString())),
-                Aggregation.project("salesAndTrafficByDate")
+                project("salesAndTrafficByDate")
                         .andExpression("{'$toDate':'$salesAndTrafficByDate.date'}")
                         .as("dateConverted"),
-                Aggregation.sort(Sort.by(Sort.Direction.DESC, "dateConverted")),
-                Aggregation.replaceRoot("salesAndTrafficByDate")
+                sort(Sort.by(Sort.Direction.DESC, "dateConverted")),
+                replaceRoot("salesAndTrafficByDate")
         );
 
         AggregationResults<Document> results = mongoTemplate
