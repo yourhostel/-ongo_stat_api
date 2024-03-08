@@ -2,7 +2,10 @@ package com.example.stat.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.ClassPathResource;
@@ -15,35 +18,39 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 @Component
+@AllArgsConstructor
 public class DatabaseInitializer {
+    private static final Logger logger = LogManager
+            .getLogger(DatabaseInitializer.class);
 
     private final MongoTemplate mongoTemplate;
 
-    @Autowired
-    public DatabaseInitializer(MongoTemplate mongoTemplate) {
-        this.mongoTemplate = mongoTemplate;
-    }
-
     @EventListener(ApplicationReadyEvent.class)
     public void initializeDatabase() {
-        try {
-            // Loading data from a JSON file
-            InputStream inputStream = new ClassPathResource("test_report.json").getInputStream();
-            String json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        // Check if the collection exists
+        if (!mongoTemplate.collectionExists("report")) {
+            try {
+                // Loading data from a JSON file
+                InputStream inputStream = new ClassPathResource("test_report.json").getInputStream();
+                String json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
-            // Загрузка данных из JSON файла
-            ObjectMapper mapper = new ObjectMapper();
+                // Convert JsonNode to Document
+                ObjectMapper mapper = new ObjectMapper();
 
-            JsonNode rootNode = mapper.readTree(json);
+                JsonNode rootNode = mapper.readTree(json);
 
-            // Преобразование JsonNode в Document
-            Document report = Document.parse(rootNode.toString());
+                // Convert JsonNode to Document
+                Document report = Document.parse(rootNode.toString());
 
-            // Storing Data in MongoDB
-            // Here we save the data in the appropriate collections
-            mongoTemplate.save(report, "report_2");
-        } catch (IOException e) {
-            e.printStackTrace();
+                // Storing Data in MongoDB
+                // Here we save the data in the appropriate collections
+                mongoTemplate.save(report, "report");
+            } catch (IOException e) {
+                logger.error("An error occurred while reading JSON file or saving data to MongoDB", e);
+            }
+        } else {
+            // Collection already exists
+            logger.info("The 'report' collection already exists. Initialization is skipped.");
         }
     }
 
