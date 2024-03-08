@@ -33,6 +33,18 @@ public class StatisticsController {
         return ResponseEntity.ok(service.findByAsin(asins));
     }
 
+    @GetMapping("/total-by-dates")
+    public ResponseEntity<Document> getTotalStatisticsByDates() {
+        Document data = service.findTotalStatisticsByDates();
+        return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/total-by-asins")
+    public ResponseEntity<Document> getTotalStatisticsByAsins() {
+        Document data = service.findTotalStatisticsByAsins();
+        return ResponseEntity.ok(data);
+    }
+
     @GetMapping("/ordered-and-amount")
     public ResponseEntity<Document> getUnitsOrderedAndAmountTotal() {
         return ResponseEntity.ok(service.findUnitsOrderedAndAmountTotal());

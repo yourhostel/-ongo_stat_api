@@ -19,6 +19,14 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 @AllArgsConstructor
 public class SalesAndTrafficService {
 
+    private static final String SALES_BY_ASIN = "salesAndTrafficByAsin.salesByAsin";
+
+    private static final String TRAFFIC_BY_ASIN = "salesAndTrafficByAsin.trafficByAsin";
+
+    private static final String SALES_BY_DATE = "salesAndTrafficByDate.salesByDate";
+
+    private static final String TRAFFIC_BY_DATE = "salesAndTrafficByDate.trafficByDate";
+
     private final MongoTemplate mongoTemplate;
 
     public List<Document> findByDateRange(LocalDate startDate, LocalDate endDate) {
@@ -58,9 +66,9 @@ public class SalesAndTrafficService {
         Aggregation aggregation = newAggregation(
                 unwind("$salesAndTrafficByAsin"),
                 group()
-                        .sum("salesAndTrafficByAsin.salesByAsin.unitsOrdered")
+                        .sum(SALES_BY_ASIN + ".unitsOrdered")
                         .as("totalUnitsOrdered")
-                        .sum("salesAndTrafficByAsin.salesByAsin.orderedProductSales.amount")
+                        .sum(SALES_BY_ASIN + ".orderedProductSales.amount")
                         .as("totalSalesAmount"),
                 project().andExclude("_id")
         );
@@ -75,6 +83,54 @@ public class SalesAndTrafficService {
                     doc.put("totalUnitsOrdered", 0);
                     return doc;
                 });
+    }
+
+    public Document findTotalStatisticsByDates() {
+        Aggregation aggregation = newAggregation(
+                unwind("$salesAndTrafficByDate"),
+                group()
+                        .sum(SALES_BY_DATE + ".unitsOrdered").as("totalUnitsOrdered")
+                        .sum(SALES_BY_DATE + ".orderedProductSales.amount").as("totalSalesAmount")
+                        .sum(TRAFFIC_BY_DATE + ".sessions").as("totalSessions")
+                        .sum(TRAFFIC_BY_DATE + ".pageViews").as("totalPageViews"),
+                project().andExclude("_id")
+        );
+
+        AggregationResults<Document> results = mongoTemplate
+                .aggregate(aggregation, "report", Document.class);
+
+        return Optional.ofNullable(results.getUniqueMappedResult()).orElseGet(() -> {
+            Document doc = new Document();
+            doc.put("totalUnitsOrdered", 0);
+            doc.put("totalSalesAmount", 0);
+            doc.put("totalSessions", 0);
+            doc.put("totalPageViews", 0);
+            return doc;
+        });
+    }
+
+    public Document findTotalStatisticsByAsins() {
+        Aggregation aggregation = newAggregation(
+                unwind("$salesAndTrafficByAsin"),
+                group()
+                        .sum(SALES_BY_ASIN + ".unitsOrdered").as("totalUnitsOrdered")
+                        .sum(SALES_BY_ASIN + ".orderedProductSales.amount").as("totalSalesAmount")
+                        .sum(TRAFFIC_BY_ASIN + ".sessions").as("totalSessions")
+                        .sum(TRAFFIC_BY_ASIN + ".pageViews").as("totalPageViews"),
+                project().andExclude("_id")
+        );
+
+        AggregationResults<Document> results = mongoTemplate
+                .aggregate(aggregation, "report", Document.class);
+
+        return Optional.ofNullable(results.getUniqueMappedResult()).orElseGet(() -> {
+            Document doc = new Document();
+            doc.put("totalUnitsOrdered", 0);
+            doc.put("totalSalesAmount", 0);
+            doc.put("totalSessions", 0);
+            doc.put("totalPageViews", 0);
+            return doc;
+        });
     }
 
 }
