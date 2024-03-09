@@ -14,10 +14,9 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 @Service
@@ -34,40 +33,32 @@ public class DataUpdateService {
     @Scheduled(fixedDelay = 10000) // 300000 ms = 5 minutes
     public void updateDataFromJsonFile() throws IOException {
         try {
-            // We access the file system directly.
-            // The file path is outside the class path.
-            String pathToFile = "src/main/resources/test_report.json";
-            // Create a file object.
-            File file = new File(pathToFile);
-            // Checking if the file exists.
-            if (file.exists() && !file.isDirectory()) {
-                String json = Files.readString(Paths.get(file.getPath()));
+            InputStream inputStream = new ClassPathResource("test_report.json").getInputStream();
+            String json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
-                String newHash = HashUtil.calculateHash(json);
-                Query query = new Query(Criteria.where("id").is("reportHash"));
-                Document currentHashDocument = mongoTemplate
-                        .findOne(query, Document.class, "metadata");
+            String newHash = HashUtil.calculateHash(json);
+            Query query = new Query(Criteria.where("id").is("reportHash"));
 
-                if (currentHashDocument != null) {
-                    String currentHash = currentHashDocument.getString("hash");
-                    logger.info("current hash ok");
-                    if (!newHash.equals(currentHash)) {
-                        // Updating data and hash in the database
-                        updateDatabase(json, newHash);
-                        invalidateCache();
-                        logger.warn("Update database ok. Invalidate cache ok");
-                    }
-                } else {
-                    logger.warn("The hash sum is missing from the database. Hash initialization in progress...");
-                    // Storing data and hash in database if hash is missing
+            Document currentHashDocument = mongoTemplate
+                    .findOne(query, Document.class, "metadata");
+
+            if (currentHashDocument != null) {
+                String currentHash = currentHashDocument.getString("hash");
+                logger.info("current hash ok");
+                if (!newHash.equals(currentHash)) {
+                    // Updating data and hash in the database
                     updateDatabase(json, newHash);
                     invalidateCache();
+                    logger.warn("Update database ok. Invalidate cache ok");
                 }
             } else {
-                logger.error("File test_report.json not found at {}", pathToFile);
+                logger.warn("The hash sum is missing from the database. Hash initialization in progress...");
+                // Storing data and hash in database if hash is missing
+                updateDatabase(json, newHash);
+                invalidateCache();
             }
         } catch (Exception e) {
-            logger.error("Error updating data from file: {} | {}", e.getMessage(), e);
+            logger.error("Error updating data from file: {} | {}", e.getMessage(),  e);
         }
     }
 
