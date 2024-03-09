@@ -25,10 +25,10 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Autowired
+
     private final UserRepository userRepository;
 
-    @Autowired
+
     private final JwtRequestFilter jwtRequestFilter;
 
     @Bean
@@ -46,7 +46,7 @@ public class SecurityConfig {
                                 AntPathRequestMatcher.antMatcher("/api/auth/login"))
                         .permitAll()
                         .anyRequest().authenticated())
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterAfter(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
