@@ -14,7 +14,6 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -31,7 +30,7 @@ public class DataUpdateService {
     private CacheManager cacheManager;
 
     @Scheduled(fixedDelay = 10000) // 300000 ms = 5 minutes
-    public void updateDataFromJsonFile() throws IOException {
+    public void updateDataFromJsonFile() {
         try {
             InputStream inputStream = new ClassPathResource("test_report.json").getInputStream();
             String json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
