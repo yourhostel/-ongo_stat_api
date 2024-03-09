@@ -27,7 +27,7 @@ public class UserService implements UserDetailsService {
 
 
     public User registerNewUserAccount(UserDto userDto) {
-        // Использование MongoTemplate для проверки существования пользователя
+
         Query query = new Query(Criteria.where("username").is(userDto.getUsername()));
         boolean userExists = mongoTemplate.exists(query, User.class);
 
@@ -44,13 +44,10 @@ public class UserService implements UserDetailsService {
     }
 
     public String login(String username, String password) {
-        UserDetails userDetails = loadUserByUsername(username);
-
-        if (!passwordEncoder.matches(password, userDetails.getPassword())) {
-            throw new IncorrectPasswordException("Incorrect password for username: " + username);
-        }
-
-        return jwtUtil.generateToken(userDetails);
+        return Optional.of(loadUserByUsername(username))
+                .filter(userDetails -> passwordEncoder.matches(password, userDetails.getPassword()))
+                .map(jwtUtil::generateToken)
+                .orElseThrow(() -> new IncorrectPasswordException("Incorrect password for username: " + username));
     }
 
     @Override
@@ -70,6 +67,5 @@ public class UserService implements UserDetailsService {
                                 .is(username)), User.class))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
-
 
 }
