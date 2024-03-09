@@ -9,6 +9,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -25,6 +27,9 @@ import java.io.IOException;
 @Component
 @EqualsAndHashCode(callSuper = true)
 public class JwtRequestFilter extends OncePerRequestFilter implements ApplicationContextAware {
+
+    private static final Logger logger = LogManager
+            .getLogger(JwtRequestFilter.class);
 
     @Autowired
     private final JwtUtil jwtUtil;
