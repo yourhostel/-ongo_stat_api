@@ -1,10 +1,10 @@
 package com.example.stat.service;
 
 import com.example.stat.util.HashUtil;
+import lombok.AllArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -19,15 +19,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 @Service
+@AllArgsConstructor
 public class DataUpdateService {
     private static final Logger logger = LogManager
             .getLogger(DataUpdateService.class);
 
-    @Autowired
     private MongoTemplate mongoTemplate;
-
-    @Autowired
     private CacheManager cacheManager;
+    private static final String OK = "Update database ok. Invalidate cache ok";
 
     @Scheduled(fixedDelay = 10000) // 300000 ms = 5 minutes
     public void updateDataFromJsonFile() {
@@ -36,7 +35,8 @@ public class DataUpdateService {
             String json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
             String newHash = HashUtil.calculateHash(json);
-            Query query = new Query(Criteria.where("id").is("reportHash"));
+            Query query = new Query(Criteria.where("id")
+                    .is("reportHash"));
 
             Document currentHashDocument = mongoTemplate
                     .findOne(query, Document.class, "metadata");
@@ -44,24 +44,20 @@ public class DataUpdateService {
             if (currentHashDocument != null) {
                 String currentHash = currentHashDocument.getString("hash");
                 logger.info("current hash ok");
-                if (!newHash.equals(currentHash)) {
-                    // Updating data and hash in the database
+                if (!newHash.equals(currentHash) || !mongoTemplate.collectionExists("report")) {
                     updateDatabase(json, newHash);
-                    invalidateCache();
-                    logger.warn("Update database ok. Invalidate cache ok");
+                    logger.warn(OK);
                 }
             } else {
-                logger.warn("The hash sum is missing from the database. Hash initialization in progress...");
-                // Storing data and hash in database if hash is missing
                 updateDatabase(json, newHash);
-                invalidateCache();
+                logger.warn(OK);
             }
         } catch (Exception e) {
             logger.error("Error updating data from file: {} | {}", e.getMessage(),  e);
         }
     }
 
-    private void updateDatabase(String json, String newHash) {
+    public void updateDatabase(String json, String newHash) {
         Document newReport = Document.parse(json);
         mongoTemplate.dropCollection("report");
         mongoTemplate.save(newReport, "report");
@@ -69,6 +65,7 @@ public class DataUpdateService {
         Query query = new Query(Criteria.where("id").is("reportHash"));
         Update update = new Update().set("hash", newHash);
         mongoTemplate.upsert(query, update, "metadata");
+        invalidateCache();
     }
 
     private void invalidateCache() {
