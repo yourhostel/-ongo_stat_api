@@ -1,5 +1,6 @@
 package com.example.stat.config;
 
+import com.example.stat.util.HashUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -45,6 +46,7 @@ public class DatabaseInitializer {
                 // Storing Data in MongoDB
                 // Here we save the data in the appropriate collections
                 mongoTemplate.save(report, "report");
+                saveInitialHash(json);
             } catch (IOException e) {
                 logger.error("An error occurred while reading JSON file or saving data to MongoDB", e);
             }
@@ -52,6 +54,16 @@ public class DatabaseInitializer {
             // Collection already exists
             logger.info("The 'report' collection already exists. Initialization is skipped.");
         }
+    }
+
+    // Logic for storing hash sum
+    private void saveInitialHash(String json) {
+        // Calculate the hash sum from a string JSON
+        String hash = HashUtil.calculateHash(json);
+        // Create a document
+        Document hashDocument = new Document("id", "reportHash").append("hash", hash);
+        // Save the document to the collection "metadata"
+        mongoTemplate.save(hashDocument, "metadata");
     }
 
 }
