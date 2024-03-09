@@ -16,10 +16,12 @@ public class JwtUtil {
     private final String secret = "your_secret_key";
 
     public String generateToken(UserDetails userDetails) {
+        // long oneDayMillis = (long) 24 * 60 * 60 * 1000; // 1 day
+        long oneWeekMillis = 7L * 24 * 60 * 60 * 1000;
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder().setClaims(claims).setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 часов
+                .setExpiration(new Date(System.currentTimeMillis() + oneWeekMillis))
                 .signWith(SignatureAlgorithm.HS256, secret).compact();
     }
 
@@ -29,11 +31,19 @@ public class JwtUtil {
     }
 
     public String getUsernameFromToken(String token) {
-        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody().getSubject();
+        return Jwts.parser()
+                .setSigningKey(secret)
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     private Boolean isTokenExpired(String token) {
-        final Date expiration = Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody().getExpiration();
+        final Date expiration = Jwts.parser()
+                .setSigningKey(secret)
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration();
         return expiration.before(new Date());
     }
 }
