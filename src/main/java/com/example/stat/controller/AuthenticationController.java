@@ -24,13 +24,15 @@ public class AuthenticationController {
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody UserDto userDto) {
         User user = userService.registerNewUserAccount(userDto);
-        return ResponseEntity.ok("User registered successfully!");
+        return ResponseEntity
+                .ok(String.format("User %s with role %s registered successfully!",
+                user.getUsername(),
+                user.getRolesStr()));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginDto loginDto) {
         String token = userService.login(loginDto.getUsername(), loginDto.getPassword());
-        System.out.println(token);
         return ResponseEntity.ok(new JwtResponse(token));
     }
 

@@ -1,8 +1,6 @@
 package com.example.stat.security;
 
-import com.example.stat.repository.UserRepository;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -24,10 +22,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-
-    private final UserRepository userRepository;
-
 
     private final JwtRequestFilter jwtRequestFilter;
 

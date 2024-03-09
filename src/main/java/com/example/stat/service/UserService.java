@@ -4,30 +4,34 @@ import com.example.stat.dto.UserDto;
 import com.example.stat.exception.IncorrectPasswordException;
 import com.example.stat.exception.UserAlreadyExistException;
 import com.example.stat.model.User;
-import com.example.stat.repository.UserRepository;
 import com.example.stat.util.JwtUtil;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @AllArgsConstructor
 public class UserService implements UserDetailsService {
 
-    @Autowired
-    private final UserRepository userRepository;
-    @Autowired
+    private final MongoTemplate mongoTemplate;
     private final PasswordEncoder passwordEncoder;
-    @Autowired
     private final JwtUtil jwtUtil;
 
 
     public User registerNewUserAccount(UserDto userDto) {
-        if (userRepository.findByUsername(userDto.getUsername()).isPresent()) {
+        // Использование MongoTemplate для проверки существования пользователя
+        Query query = new Query(Criteria.where("username").is(userDto.getUsername()));
+        boolean userExists = mongoTemplate.exists(query, User.class);
+
+        if (userExists) {
             throw new UserAlreadyExistException("There is an account with that username: " + userDto.getUsername());
         }
 
@@ -36,7 +40,7 @@ public class UserService implements UserDetailsService {
         newUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         newUser.setRoles(new String[]{"USER"});
 
-        return userRepository.save(newUser);
+        return mongoTemplate.save(newUser);
     }
 
     public String login(String username, String password) {
@@ -51,8 +55,7 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+        User user = findUserByUsername(username);
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
@@ -60,5 +63,13 @@ public class UserService implements UserDetailsService {
                 // TODO: Set roles and authorities for the user if needed
                 .build();
     }
+
+    public User findUserByUsername(String username) {
+        return Optional.ofNullable(mongoTemplate
+                        .findOne(new Query(Criteria.where("username")
+                                .is(username)), User.class))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    }
+
 
 }

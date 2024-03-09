@@ -35,4 +35,8 @@ public class User {
         return this.roles.split(DELIMITER);
     }
 
+    public String getRolesStr() {
+        return this.roles;
+    }
+
 }
