@@ -21,21 +21,20 @@ import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
 public class SalesAndTrafficService {
 
     private static final String SALES_BY_ASIN = "salesAndTrafficByAsin.salesByAsin";
-
     private static final String TRAFFIC_BY_ASIN = "salesAndTrafficByAsin.trafficByAsin";
-
     private static final String SALES_BY_DATE = "salesAndTrafficByDate.salesByDate";
-
     private static final String TRAFFIC_BY_DATE = "salesAndTrafficByDate.trafficByDate";
 
     private final MongoTemplate mongoTemplate;
 
     /**
-     * @param startDate
-     * @param endDate
-     * @return
+     * Виводить статистику продажів і трафіку за вказаний діапазон дат.
      * Кешуємо за діапазоном дат. Ключ кеша включає рядки обох дат,
      * щоб результати були унікальні для кожного діапазону.
+     *
+     * @param startDate Початкова дата діапазону.
+     * @param endDate Кінцева дата діапазону.
+     * @return Список документів з даними статистики.
      */
     @Cacheable(value = "findByDateRangeCache", key = "#startDate.toString() + #endDate.toString()")
     public List<Document> findByDateRange(LocalDate startDate, LocalDate endDate) {
@@ -57,12 +56,14 @@ public class SalesAndTrafficService {
     }
 
     /**
-     * @param asins
-     * @return
+     * Виводить статистику продажів і трафіку за списком ASIN.
      * Кешуємо за списком ASIN, тому що запити по одному
      * або декільком ASIN можуть бути повторними.
      * Ключ кешу заснований на списках ASIN, об'єднаних у рядок,
      * щоб кожен унікальний набір ASIN мав свій результат у кеші.
+     *
+     * @param asins Список ASIN для отримання статистики.
+     * @return Список документів з даними статистики.
      */
     @Cacheable(value = "findByAsinCache", key = "#asins.toString()")
     public List<Document> findByAsin(List<String> asins) {
@@ -81,18 +82,19 @@ public class SalesAndTrafficService {
     }
 
     /**
-     * @return
-     * Кешуємо загальну статистику за замовленими одиницями та сумою продажів.
-     * Тут можна використовувати фіксований ключ,
-     * оскільки метод не набирає параметрів.
+     * Виводить загальну статистику замовлених одиниць і суми продажів.
+     * Результати методу кешуються з використанням фіксованого ключа.
+     * оскільки метод не приймає параметрів.
+     *
+     * @return Документ з загальною статистикою.
      */
     @Cacheable(value = "totalUnitsAndSalesCache")
     public Document findUnitsOrderedAndAmountTotal() {
 
-//          Штучна затримка в 1 секунду (1000 мілісекунд)
+//          Штучна затримка в 1 секунду.
 //          Для помітної затримки запитів до бази даних щоб побачити різницю роботи
-//          при закоментованій інструкції Cacheable (без кешування) при навантажувальном тестуванні
-//          наприклад у Postman Runner.
+//          при закоментованій інструкції Cacheable (без кешування)
+//          при навантажувальном тестуванні.
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -121,8 +123,10 @@ public class SalesAndTrafficService {
     }
 
     /**
-     * @return
-     * Кешуємо загальну статистику за датами. Використовуємо фіксований ключ.
+     * Виводить загальну статистику за датами.
+     * Результати методу кешуються з використанням фіксованого ключа.
+     *
+     * @return Документ з загальною статистикою за датами.
      */
     @Cacheable(value = "totalStatsByDatesCache")
     public Document findTotalStatisticsByDates() {
@@ -150,8 +154,10 @@ public class SalesAndTrafficService {
     }
 
     /**
-     * @return
-     * Кешуємо загальну статистику з ASIN. Використовуємо фіксований ключ.
+     * Виводить загальну статистику за ASIN.
+     * Результати методу кешуються з використанням фіксованого ключа.
+     *
+     * @return Документ з загальною статистикою за ASIN.
      */
     @Cacheable(value = "totalStatsByAsinsCache")
     public Document findTotalStatisticsByAsins() {
