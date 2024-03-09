@@ -46,7 +46,7 @@ public class JwtRequestFilter extends OncePerRequestFilter implements Applicatio
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain chain)
-            throws ServletException, IOException {
+            throws IOException {
         try {
             if (isRequestForProtectedResource(request)) {
                 final String authorizationHeader = request.getHeader("Authorization");
