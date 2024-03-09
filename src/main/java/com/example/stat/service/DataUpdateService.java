@@ -1,6 +1,5 @@
 package com.example.stat.service;
 
-import com.example.stat.config.DatabaseInitializer;
 import com.example.stat.util.HashUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
