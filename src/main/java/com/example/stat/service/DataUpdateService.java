@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -30,8 +31,7 @@ public class DataUpdateService {
 
     @Scheduled(fixedDelay = 10000) // 300000 ms = 5 minutes
     public void updateDataFromJsonFile() {
-        try {
-            InputStream inputStream = new ClassPathResource("test_report.json").getInputStream();
+        try(InputStream inputStream = new ClassPathResource("test_report.json").getInputStream()) {
             String json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
             String newHash = HashUtil.calculateHash(json);
@@ -41,17 +41,16 @@ public class DataUpdateService {
             Document currentHashDocument = mongoTemplate
                     .findOne(query, Document.class, "metadata");
 
-            if (currentHashDocument != null) {
-                String currentHash = currentHashDocument.getString("hash");
+            String currentHash = Optional.ofNullable(currentHashDocument)
+                    .map(doc -> doc.getString("hash"))
+                    .orElse(null);
+
                 logger.info("current hash ok");
                 if (!newHash.equals(currentHash) || !mongoTemplate.collectionExists("report")) {
                     updateDatabase(json, newHash);
                     logger.warn(OK);
                 }
-            } else {
-                updateDatabase(json, newHash);
-                logger.warn(OK);
-            }
+
         } catch (Exception e) {
             logger.error("Error updating data from file: {} | {}", e.getMessage(),  e);
         }
